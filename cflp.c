@@ -37,57 +37,92 @@ typedef struct
 
 typedef struct
 {
+	customer_t* array;
+	customer_t* buffer;
+	size_t length;
+} mergesort_customer_t;
+
+typedef struct
+{
 	facility_tuple_t* array;
 	facility_tuple_t* buffer;
 	size_t length;
+} mergesort_facility_tuple_t;
+
+typedef struct
+{
+	const char* array;
+	char* buffer;
+	size_t size;
+	size_t length;
 } mergesort_t;
 
-void merge(mergesort_t sort, size_t l, size_t m, size_t r, int order)
+int key_customer(const void* obj)
 {
-	memcpy(sort.buffer + l, sort.array + l, (m - l + 1) * sizeof(facility_tuple_t));
-	memcpy(sort.buffer + m + 1, sort.array + m + 1, (r - m) * sizeof(facility_tuple_t));
+	return ((customer_t*)obj)->key;
+}
+
+int key_facility_tuple(const void* obj)
+{
+	return ((facility_tuple_t*)obj)->key;
+}
+
+typedef int(*key_func)(const void* obj);
+
+void merge(mergesort_t sort, size_t l, size_t m, size_t r, int order, key_func func)
+{
+	size_t index = (l)* sort.size;
+	size_t length = (m - l + 1)* sort.size;
+	memcpy(sort.buffer + index, sort.array + index, length);
+	index = (m + 1)* sort.size;
+	length = (r - m)* sort.size;
+	memcpy(sort.buffer + index, sort.array + index, length);
 	size_t p = l;
 	size_t q = r;
 	for (size_t i = l; i <= r; i++) {
-		if (order ? sort.buffer[p].key <= sort.buffer[q].key : sort.buffer[p].key >= sort.buffer[q].key) {
-			sort.array[i] = sort.buffer[p++];
+		int pkey = func(sort.buffer + p * sort.size);
+		int qkey = func(sort.buffer + q * sort.size);
+		if (order ? pkey <= qkey : pkey >= qkey) {
+			memcpy(sort.array + i * sort.size, sort.buffer + (p++) * sort.size, sort.size);
 		}
 		else {
-			sort.array[i] = sort.buffer[q--];
+			memcpy(sort.array + i * sort.size, sort.buffer + (q--) * sort.size, sort.size);
 		}
 	}
 }
 
-void merge_sort_rec(mergesort_t sort, size_t l, size_t r, int order)
+void merge_sort_rec(mergesort_t sort, size_t l, size_t r, int order, key_func func)
 {
 	if (l < r)
 	{
 		int m = (l + r) / 2;
-		merge_sort_rec(sort, l, m, order);
-		merge_sort_rec(sort, m + 1, r, !order);
-		merge(sort, l, m, r, order);
+		merge_sort_rec(sort, l, m, order, func);
+		merge_sort_rec(sort, m + 1, r, !order, func);
+		merge(sort, l, m, r, order, func);
 	}
 }
 
-void merge_sort_asc(facility_tuple_t* array, size_t length)
+void merge_sort_asc(void* array, size_t length, size_t size, key_func func)
 {
 	mergesort_t sort;
-	sort.array = array;
+	sort.array = (char*)array;
 	sort.length = length;
-	sort.buffer = (facility_tuple_t*)malloc(sizeof(facility_tuple_t)* length);
-	memcpy(sort.buffer, sort.array, sizeof(facility_tuple_t)* length);
-	merge_sort_rec(sort, 0, length - 1, 1);
+	sort.size = size;
+	sort.buffer = (char*)malloc(size * length);
+	memcpy(sort.buffer, sort.array, size * length);
+	merge_sort_rec(sort, 0, length - 1, 1, func);
 	free(sort.buffer);
 }
 
-void merge_sort_dsc(facility_tuple_t* array, size_t length)
+void merge_sort_dsc(void* array, size_t length, size_t size, key_func func)
 {
 	mergesort_t sort;
-	sort.array = array;
+	sort.array = (char*)array;
 	sort.length = length;
-	sort.buffer = (facility_tuple_t*)malloc(sizeof(facility_tuple_t)* length);
-	memcpy(sort.buffer, sort.array, sizeof(facility_tuple_t)* length);
-	merge_sort_rec(sort, 0, length - 1, 1);
+	sort.size = size;
+	sort.buffer = (char*)malloc(size * length);
+	memcpy(sort.buffer, sort.array, size * length);
+	merge_sort_rec(sort, 0, length - 1, 0, func);
 	free(sort.buffer);
 }
 
@@ -143,7 +178,7 @@ void branch(void* context, customer_t* customer, size_t* solution, cflp_val* Upp
 void bnb_run(void* context, cflp_instance_t* instance)
 {
 	// calculateBestCustomers
-	customer_t* customersBandwidth = (customer_t*)malloc(sizeof(customer_t) * instance->num_customers);
+	customer_t* customersBandwidth = (customer_t*)malloc(sizeof(customer_t)* instance->num_customers);
 	facility_t* facilities = (facility_t*)malloc(sizeof(facility_t)* instance->num_facilities);
 	for (size_t k = 0; k < instance->num_facilities; k++)
 	{
@@ -162,7 +197,7 @@ void bnb_run(void* context, cflp_instance_t* instance)
 			nearest[k].value = &facilities[k];
 			nearest[k].next = NULL;
 		}
-		merge_sort_asc(nearest, instance->num_facilities);
+		merge_sort_asc(nearest, instance->num_facilities, sizeof(facility_tuple_t), key_facility_tuple);
 		facility_tuple_t* ptr = &nearest[0];
 		for (size_t k = 1; k < instance->num_facilities; k++)
 		{
@@ -176,7 +211,7 @@ void bnb_run(void* context, cflp_instance_t* instance)
 		customersBandwidth[i].next = NULL;
 		customersBandwidth[i].cost = 0;
 	}
-	// TODO: sort customersBandwidth here
+	merge_sort_dsc(customersBandwidth, instance->num_customers, sizeof(customer_t), key_customer);
 	customer_t* begin = &customersBandwidth[0];
 	customer_t* ptr = begin;
 	for (size_t i = 1; i < instance->num_customers; i++) {
@@ -196,13 +231,13 @@ void bnb_run(void* context, cflp_instance_t* instance)
 	// TODO: use Upper Bound Heuristic here
 
 	size_t* solution = (size_t*)malloc(sizeof(size_t)* instance->num_customers);
-	
+
 	cflp_val upper_bound_inc = CFLP_VAL_MAX;
 	branch(context, begin, solution, &upper_bound_inc, instance->max_bandwith, instance->num_customers);
-	
+
 	free(solution);
 	solution = NULL;
-	
+
 	for (size_t i = 0; i < instance->num_customers; i++)
 	{
 		free(customersBandwidth[i].nearest);
