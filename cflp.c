@@ -62,6 +62,11 @@ int key_customer(const void* obj)
 	return ((customer_t*)obj)->key;
 }
 
+int key_customer_tuple(const void* obj)
+{
+	return ((customer_tuple_t*)obj)->key;
+}
+
 int key_facility_tuple(const void* obj)
 {
 	return ((facility_tuple_t*)obj)->key;
@@ -126,26 +131,32 @@ void merge_sort_dsc(void* array, size_t length, size_t size, key_func func)
 	free(sort.buffer);
 }
 
-cflp_val recentCost(facility_t* facility)
+static __inline cflp_val recentCost(facility_t* facility)
 {
 	return facility->user == 0 ? facility->opening_costs : 0;
 }
 
-int canAddUser(facility_t* facility, cflp_val maxBandwidth, cflp_val bandwidth)
+static __inline int canAddUser(facility_t* facility, cflp_val maxBandwidth, cflp_val bandwidth)
 {
 	return facility->user < facility->max_user && facility->bandwidth + bandwidth <= maxBandwidth;
 }
 
-void addUser(facility_t* facility, cflp_val bandwidth)
+static __inline void addUser(facility_t* facility, cflp_val bandwidth)
 {
 	facility->user++;
 	facility->bandwidth += bandwidth;
 }
 
-void removeUser(facility_t* facility, cflp_val bandwidth)
+static __inline void removeUser(facility_t* facility, cflp_val bandwidth)
 {
 	facility->user--;
 	facility->bandwidth -= bandwidth;
+}
+
+static __inline void reset(facility_t* facility)
+{
+	facility->user = 0;
+	facility->bandwidth = 0;
 }
 
 void branch(void* context, customer_t* customer, size_t* solution, cflp_val* UpperBoundInclusive, cflp_val maxBandwidth, size_t solution_len)
@@ -177,8 +188,12 @@ void branch(void* context, customer_t* customer, size_t* solution, cflp_val* Upp
 
 void bnb_run(void* context, cflp_instance_t* instance)
 {
+	size_t* solution = (size_t*)malloc(sizeof(size_t)* instance->num_customers);
+	cflp_val upper_bound_inc = CFLP_VAL_MAX;
+
 	// calculateBestCustomers
 	customer_t* customersBandwidth = (customer_t*)malloc(sizeof(customer_t)* instance->num_customers);
+	customer_tuple_t* customerMaxMin = (customer_tuple_t*)malloc(sizeof(customer_tuple_t)* instance->num_customers);
 	facility_t* facilities = (facility_t*)malloc(sizeof(facility_t)* instance->num_facilities);
 	for (size_t k = 0; k < instance->num_facilities; k++)
 	{
@@ -210,15 +225,20 @@ void bnb_run(void* context, cflp_instance_t* instance)
 		customersBandwidth[i].lower = 0;
 		customersBandwidth[i].next = NULL;
 		customersBandwidth[i].cost = 0;
+
+		customerMaxMin[i].key = nearest[instance->num_facilities - 1].key - nearest[0].key;
+		customerMaxMin[i].customer = &customersBandwidth[i];
 	}
 	merge_sort_dsc(customersBandwidth, instance->num_customers, sizeof(customer_t), key_customer);
+	merge_sort_dsc(customerMaxMin, instance->num_customers, sizeof(customer_tuple_t), key_customer_tuple);
 	customer_t* begin = &customersBandwidth[0];
 	customer_t* ptr = begin;
 	for (size_t i = 1; i < instance->num_customers; i++) {
 		ptr->next = &customersBandwidth[i];
 		ptr = ptr->next;
 	}
-	// calculateLowerBound
+
+	// calculateLowerBound - Dual Heuristic
 	cflp_val cost = 0;
 	customersBandwidth[instance->num_customers - 1].lower = cost;
 	for (size_t i = instance->num_customers - 1; i > 0; i--)
@@ -228,15 +248,39 @@ void bnb_run(void* context, cflp_instance_t* instance)
 		cost += minDistance;
 		customersBandwidth[i - 1].lower = cost;
 	}
-	// TODO: use Upper Bound Heuristic here
 
-	size_t* solution = (size_t*)malloc(sizeof(size_t)* instance->num_customers);
+	// calculateUpperBound - Primal Heuristic
+	cost = 0;
+	int valid_solution = 0;
+	for (size_t i = 0; i < instance->num_customers; i++) {
+		customer_t* customer = customerMaxMin[i].customer;
+		valid_solution = 0;
+		for (facility_tuple_t* facilityTuple = customer->nearest; facilityTuple != NULL; facilityTuple = facilityTuple->next) {
+			facility_t* facility = facilityTuple->value;
+			if (canAddUser(facility, instance->max_bandwith, customer->key)) {
+				cost += recentCost(facility) + facilityTuple->key;
+				addUser(facility, customer->key);
+				solution[customer->num] = facility->num;
+				valid_solution = 1;
+				break;
+			}
+		}
+		if (!valid_solution)
+		{
+			break;
+		}
+	}
+	if (valid_solution)
+	{
+		upper_bound_inc = cost - 1;
+		bnb_set_solution(context, cost, solution, instance->num_customers);
+	}
+	for (int i = 0; i < instance->num_facilities; i++) {
+		reset(&facilities[i]);
+	}
 
-	cflp_val upper_bound_inc = CFLP_VAL_MAX;
+	// run
 	branch(context, begin, solution, &upper_bound_inc, instance->max_bandwith, instance->num_customers);
-
-	free(solution);
-	solution = NULL;
 
 	for (size_t i = 0; i < instance->num_customers; i++)
 	{
@@ -244,5 +288,7 @@ void bnb_run(void* context, cflp_instance_t* instance)
 		customersBandwidth[i].nearest = NULL;
 	}
 	free(customersBandwidth);
+	free(customerMaxMin);
 	free(facilities);
+	free(solution);
 }
