@@ -1,9 +1,9 @@
 CC=gcc
 CFLAGS=-c -Wall -std=gnu11 -Wpedantic -Wextra -O3
 LDFLAGS=
-SRCDIR=src
+SRCDIR=.
 SOURCES=$(wildcard $(SRCDIR)/*.c) 
-HEADERS=$(wildcard $(SRCDIR)/include/*.h)
+HEADERS=$(wildcard $(SRCDIR)/*.h)
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=ccflp
 PREFIX=/usr/bin
