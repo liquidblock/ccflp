@@ -9,8 +9,10 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
-
+#ifdef WIN32
 #define PTW32_STATIC_LIB
+
+#endif
 #include <pthread.h>
 
 typedef long long millisec;
@@ -112,6 +114,8 @@ void run(cflp_instance_t* instance, int dontStop, int test, int debug, const cha
 
 	end = currentTimeMillis();
 
+	millisec sum123 = end - start - offs;
+
 	int* used_bandwidths = NULL;
 	int* connected_customers = NULL;
 	block_buffer_t* msg = block_buffer_create();
@@ -197,32 +201,23 @@ void run(cflp_instance_t* instance, int dontStop, int test, int debug, const cha
 			break;
 		}
 		
-		char upper_bound_buffer[256];
-		char threshold_buffer[256];
-		snprintf(upper_bound_buffer, 256, "%d", upper_bound);
-		snprintf(threshold_buffer, 256, "%d", original->threshold);
-
 		block_buffer_append_string(msg, "Schwellwert = ");
-		block_buffer_append_string(msg, threshold_buffer);
+		block_buffer_append_int(msg, original->threshold);
 		block_buffer_append_string(msg, ". Ihr Ergebnis ist OK mit \n");
-		block_buffer_append_string(msg, upper_bound_buffer);
+		block_buffer_append_int(msg, upper_bound);
 
 		if (test)
 		{
 			if (sum > 1000)
 			{
-				char buffer[256];
-				snprintf(buffer, 256, "%lld", sum/1000);
 				block_buffer_append_string(msg, ", Zeit: ");
-				block_buffer_append_string(msg, buffer);
+				block_buffer_append_int(msg, sum / 1000);
 				block_buffer_append_string(msg, "s");
 			}
 			else
 			{
-				char buffer[256];
-				snprintf(buffer, 256, "%lld", sum);
 				block_buffer_append_string(msg, ", Zeit: ");
-				block_buffer_append_string(msg, buffer);
+				block_buffer_append_int(msg, sum);
 				block_buffer_append_string(msg, "ms");
 			}
 			
@@ -290,4 +285,6 @@ int main(int argv, char** argc)
 		perror("Could not load instance!");
 	}
 	instance = NULL;
+	int d;
+	scanf("%d", &d);
 }

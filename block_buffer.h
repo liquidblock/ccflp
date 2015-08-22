@@ -27,6 +27,7 @@ block_buffer_t* block_buffer_create_len(size_t segment_size);
 void block_buffer_append_string(block_buffer_t* buffer, const char* string);
 void block_buffer_append_memory(block_buffer_t* buffer, const char* memory, size_t memory_len);
 void block_buffer_append_character(block_buffer_t* buffer, const char character);
+void block_buffer_append_int(block_buffer_t* buffer, long long number);
 const char* block_buffer_generate(block_buffer_t* buffer);
 void block_buffer_clear(block_buffer_t** buffer);
 void block_buffer_free(block_buffer_t* buffer);

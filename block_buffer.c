@@ -106,6 +106,24 @@ void block_buffer_append_character(block_buffer_t* buffer, const char character)
 	}
 }
 
+void block_buffer_append_int(block_buffer_t* buffer, long long number)
+{
+	if (number < 0) {
+		block_buffer_append_character(buffer, '-');
+		number = -number;
+	}
+	else
+	{
+		long long next = number / 10;
+		char character = '0' + number % 10;
+		if (next != 0)
+		{
+			block_buffer_append_int(buffer, next);
+		}
+		block_buffer_append_character(buffer, character);
+	}
+}
+
 const char* block_buffer_generate(block_buffer_t* buffer)
 {
 	if (buffer->buffer_changed)
