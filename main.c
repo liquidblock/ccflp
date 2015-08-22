@@ -278,22 +278,7 @@ int main(int argv, char** argc)
 			fileName = argc[i];
 		}
 	}
-
-/*
-cflp_val cus_bandwidths[8] = {5,5,24,10,19,14,9,14}; 
-cflp_val distances[8*3] = {258, 324, 149,
-132, 138, 143,
-248, 288, 171,
-88, 63, 159,
-113, 189, 7,
-60, 110, 87,
-153, 238, 87,
-108, 33, 202
-
-}; 
-cflp_val fac_opening_costs[3] = {109,193,193};
-cflp_val fac_max_customers[3] = {2,4,2};
-//cflp_instance_create(9855, 39, fac_max_customers, 10, fac_opening_costs, cus_bandwidths, distances, 3, 8); // */
+	
 	cflp_instance_t* instance = cflp_instance_reader_read_instance(fileName);
 	if (instance != NULL)
 	{

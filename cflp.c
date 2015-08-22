@@ -152,7 +152,6 @@ void bnb_run(void* context, cflp_instance_t* instance)
 		facilities[k].num = k;
 		facilities[k].opening_costs = instance->fac_opening_costs[k];
 		facilities[k].user = 0;
-		//printf("%d, %d;;; ", instance->fac_max_customers[k], instance->fac_opening_costs[k]);
 	}
 	for (size_t i = 0; i < instance->num_customers; i++)
 	{
@@ -162,14 +161,8 @@ void bnb_run(void* context, cflp_instance_t* instance)
 			nearest[k].key = instance->distances[CFLP_INSTANCE_DISTANCE_INDEX(k, i, instance->num_facilities, instance->num_customers)] * instance->distance_costs;
 			nearest[k].value = &facilities[k];
 			nearest[k].next = NULL;
-			//printf("%d-", instance->distances[CFLP_INSTANCE_DISTANCE_INDEX(k, i, instance->num_facilities, instance->num_customers)]);
 		}
 		merge_sort_asc(nearest, instance->num_facilities);
-		for (size_t k = 0; k < instance->num_facilities; k++)
-		{
-			//printf("[%d:%d]", nearest[k].key, nearest[k].value->num);
-		}
-		//printf("\n");
 		facility_tuple_t* ptr = &nearest[0];
 		for (size_t k = 1; k < instance->num_facilities; k++)
 		{
@@ -183,7 +176,7 @@ void bnb_run(void* context, cflp_instance_t* instance)
 		customersBandwidth[i].next = NULL;
 		customersBandwidth[i].cost = 0;
 	}
-	// sort customersBandwidth
+	// TODO: sort customersBandwidth here
 	customer_t* begin = &customersBandwidth[0];
 	customer_t* ptr = begin;
 	for (size_t i = 1; i < instance->num_customers; i++) {
@@ -200,6 +193,7 @@ void bnb_run(void* context, cflp_instance_t* instance)
 		cost += minDistance;
 		customersBandwidth[i - 1].lower = cost;
 	}
+	// TODO: use Upper Bound Heuristic here
 
 	size_t* solution = (size_t*)malloc(sizeof(size_t)* instance->num_customers);
 	

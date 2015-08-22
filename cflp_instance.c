@@ -3,7 +3,12 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#define min(a, b) (a < b ? a : b)
+#ifndef min
+#define min(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+#endif
 
 cflp_instance_t* cflp_instance_create(cflp_val threshold, cflp_val max_bandwith, cflp_val* fac_max_customers, cflp_val distance_costs, cflp_val* fac_opening_costs, cflp_val* cus_bandwidths, cflp_val* distances, size_t fac_len, size_t cus_len)
 {

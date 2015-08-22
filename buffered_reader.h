@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include "block_buffer.h"
 
-//4096
-#define BUFFERED_READER_DEFAULT_LEN (rand()%100+1)
+// #define BUFFERED_READER_DEFAULT_LEN (rand()%100+1) // to test the buffered reader
+#define BUFFERED_READER_DEFAULT_LEN 4096
 
 struct buffered_reader_s
 {
@@ -15,7 +15,7 @@ struct buffered_reader_s
 	size_t default_len;
 	size_t buffer_pos;
 
-	int skip_lf; // line feed 0x0A
+	int skip_lf; // skip line feed '\n'
 };
 
 typedef struct buffered_reader_s buffered_reader_t;

@@ -1,7 +1,7 @@
 #include "types.h"
 
-// 128
-#define BLOCK_BUFFER_DEFAULT_SIZE (rand()%100+1)
+// #define BLOCK_BUFFER_DEFAULT_SIZE (rand()%100+1) // to test the block buffer
+#define BLOCK_BUFFER_DEFAULT_SIZE 128
 
 struct block_buffer_segment_s
 {
