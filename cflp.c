@@ -37,12 +37,19 @@ typedef struct
 
 typedef struct
 {
+	customer_t* array;
+	customer_t* buffer;
+	size_t length;
+} mergesort_customer_t;
+
+typedef struct
+{
 	facility_tuple_t* array;
 	facility_tuple_t* buffer;
 	size_t length;
-} mergesort_t;
+} mergesort_facility_tuple_t;
 
-void merge(mergesort_t sort, size_t l, size_t m, size_t r, int order)
+void merge_facility_tuple(mergesort_facility_tuple_t sort, size_t l, size_t m, size_t r, int order)
 {
 	memcpy(sort.buffer + l, sort.array + l, (m - l + 1) * sizeof(facility_tuple_t));
 	memcpy(sort.buffer + m + 1, sort.array + m + 1, (r - m) * sizeof(facility_tuple_t));
@@ -58,36 +65,63 @@ void merge(mergesort_t sort, size_t l, size_t m, size_t r, int order)
 	}
 }
 
-void merge_sort_rec(mergesort_t sort, size_t l, size_t r, int order)
+void merge_sort_rec_facility_tuple(mergesort_facility_tuple_t sort, size_t l, size_t r, int order)
 {
 	if (l < r)
 	{
 		int m = (l + r) / 2;
-		merge_sort_rec(sort, l, m, order);
-		merge_sort_rec(sort, m + 1, r, !order);
-		merge(sort, l, m, r, order);
+		merge_sort_rec_facility_tuple(sort, l, m, order);
+		merge_sort_rec_facility_tuple(sort, m + 1, r, !order);
+		merge_facility_tuple(sort, l, m, r, order);
 	}
 }
 
-void merge_sort_asc(facility_tuple_t* array, size_t length)
+void merge_customer(mergesort_customer_t sort, size_t l, size_t m, size_t r, int order)
 {
-	mergesort_t sort;
+	memcpy(sort.buffer + l, sort.array + l, (m - l + 1) * sizeof(customer_t));
+	memcpy(sort.buffer + m + 1, sort.array + m + 1, (r - m) * sizeof(customer_t));
+	size_t p = l;
+	size_t q = r;
+	for (size_t i = l; i <= r; i++) {
+		if (order ? sort.buffer[p].key <= sort.buffer[q].key : sort.buffer[p].key >= sort.buffer[q].key) {
+			sort.array[i] = sort.buffer[p++];
+		}
+		else {
+			sort.array[i] = sort.buffer[q--];
+		}
+	}
+}
+
+void merge_sort_rec_customer(mergesort_customer_t sort, size_t l, size_t r, int order)
+{
+	if (l < r)
+	{
+		int m = (l + r) / 2;
+		merge_sort_rec_customer(sort, l, m, order);
+		merge_sort_rec_customer(sort, m + 1, r, !order);
+		merge_customer(sort, l, m, r, order);
+	}
+}
+
+void merge_sort_asc_facility_tuple(facility_tuple_t* array, size_t length)
+{
+	mergesort_facility_tuple_t sort;
 	sort.array = array;
 	sort.length = length;
 	sort.buffer = (facility_tuple_t*)malloc(sizeof(facility_tuple_t)* length);
 	memcpy(sort.buffer, sort.array, sizeof(facility_tuple_t)* length);
-	merge_sort_rec(sort, 0, length - 1, 1);
+	merge_sort_rec_facility_tuple(sort, 0, length - 1, 1);
 	free(sort.buffer);
 }
 
-void merge_sort_dsc(facility_tuple_t* array, size_t length)
+void merge_sort_dsc_customer(customer_t* array, size_t length)
 {
-	mergesort_t sort;
+	mergesort_customer_t sort;
 	sort.array = array;
 	sort.length = length;
-	sort.buffer = (facility_tuple_t*)malloc(sizeof(facility_tuple_t)* length);
-	memcpy(sort.buffer, sort.array, sizeof(facility_tuple_t)* length);
-	merge_sort_rec(sort, 0, length - 1, 1);
+	sort.buffer = (customer_t*)malloc(sizeof(customer_t)* length);
+	memcpy(sort.buffer, sort.array, sizeof(customer_t)* length);
+	merge_sort_rec_customer(sort, 0, length - 1, 0);
 	free(sort.buffer);
 }
 
@@ -162,7 +196,7 @@ void bnb_run(void* context, cflp_instance_t* instance)
 			nearest[k].value = &facilities[k];
 			nearest[k].next = NULL;
 		}
-		merge_sort_asc(nearest, instance->num_facilities);
+		merge_sort_asc_facility_tuple(nearest, instance->num_facilities);
 		facility_tuple_t* ptr = &nearest[0];
 		for (size_t k = 1; k < instance->num_facilities; k++)
 		{
@@ -176,7 +210,7 @@ void bnb_run(void* context, cflp_instance_t* instance)
 		customersBandwidth[i].next = NULL;
 		customersBandwidth[i].cost = 0;
 	}
-	// TODO: sort customersBandwidth here
+	merge_sort_dsc_customer(customersBandwidth, instance->num_customers);
 	customer_t* begin = &customersBandwidth[0];
 	customer_t* ptr = begin;
 	for (size_t i = 1; i < instance->num_customers; i++) {
