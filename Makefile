@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-c -Wall -std=gnu11 -Wpedantic -Wextra -pthread -O3
+CFLAGS=-c -Wall -std=gnu11 -Wpedantic -Wextra -pthread -O3 -D_GNU_SOURCE
 LDFLAGS=-lpthread
 SRCDIR=.
 SOURCES=$(wildcard $(SRCDIR)/*.c) 
