@@ -285,6 +285,4 @@ int main(int argv, char** argc)
 		perror("Could not load instance!");
 	}
 	instance = NULL;
-	int d;
-	scanf("%d", &d);
 }
