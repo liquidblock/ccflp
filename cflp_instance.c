@@ -10,9 +10,11 @@
      _a < _b ? _a : _b; })
 #endif
 
-cflp_instance_t* cflp_instance_create(cflp_val threshold, cflp_val max_bandwith, cflp_val* fac_max_customers, cflp_val distance_costs, cflp_val* fac_opening_costs, cflp_val* cus_bandwidths, cflp_val* distances, size_t fac_len, size_t cus_len)
+cflp_instance *cflp_instance_create(cflp_val threshold, cflp_val max_bandwith, cflp_val *fac_max_customers,
+									cflp_val distance_costs, cflp_val *fac_opening_costs, cflp_val *cus_bandwidths,
+									cflp_val *distances, size_t fac_len, size_t cus_len)
 {
-	cflp_instance_t* instance = (cflp_instance_t*)malloc(sizeof(cflp_instance_t));
+	cflp_instance *instance = (cflp_instance *) malloc(sizeof(cflp_instance));
 
 	instance->threshold = threshold;
 	instance->max_bandwith = max_bandwith;
@@ -35,47 +37,47 @@ cflp_instance_t* cflp_instance_create(cflp_val threshold, cflp_val max_bandwith,
 	return instance;
 }
 
-cflp_instance_t* cflp_instance_copy(cflp_instance_t* other)
+cflp_instance *cflp_instance_copy(cflp_instance *other)
 {
 	return cflp_instance_create(other->threshold, other->max_bandwith, other->fac_max_customers, other->distance_costs, other->fac_opening_costs, other->cus_bandwidths, other->distances, other->num_facilities, other->num_customers);
 }
 
-size_t cflp_instance_get_num_customers(cflp_instance_t* instance)
+size_t cflp_instance_get_num_customers(cflp_instance *instance)
 {
 	return instance->num_customers;
 }
 
-size_t cflp_instance_get_num_facilities(cflp_instance_t* instance)
+size_t cflp_instance_get_num_facilities(cflp_instance *instance)
 {
 	return instance->num_facilities;
 }
 
-cflp_val cflp_instance_bandwidth_of(cflp_instance_t* instance, size_t customer_idx)
+cflp_val cflp_instance_bandwidth_of(cflp_instance *instance, size_t customer_idx)
 {
 	return instance->cus_bandwidths[customer_idx];
 }
 
-cflp_val cflp_instance_distance(cflp_instance_t* instance, size_t facility_idx, size_t customer_idx)
+cflp_val cflp_instance_distance(cflp_instance *instance, size_t facility_idx, size_t customer_idx)
 {
 	return instance->distances[CFLP_INSTANCE_DISTANCE_INDEX(facility_idx, customer_idx, instance->num_facilities, instance->num_customers)];
 }
 
-cflp_val cflp_instance_opening_costs_for(cflp_instance_t* instance, size_t facility_idx)
+cflp_val cflp_instance_opening_costs_for(cflp_instance *instance, size_t facility_idx)
 {
 	return instance->fac_opening_costs[facility_idx];
 }
 
-cflp_val cflp_instance_max_customers_for(cflp_instance_t* instance, size_t facility_idx)
+cflp_val cflp_instance_max_customers_for(cflp_instance *instance, size_t facility_idx)
 {
 	return instance->fac_max_customers[facility_idx];
 }
 
-cflp_val cflp_instance_get_threshold(cflp_instance_t* instance)
+cflp_val cflp_instance_get_threshold(cflp_instance *instance)
 {
 	return instance->threshold;
 }
 
-cflp_val cflp_instance_calc_objective_value(cflp_instance_t* instance, size_t* solution, size_t solution_len)
+cflp_val cflp_instance_calc_objective_value(cflp_instance *instance, size_t *solution, size_t solution_len)
 {
 	size_t opened_facilities_len = cflp_instance_get_num_facilities(instance) * sizeof(cflp_val);
 	size_t* opened_facilities = (size_t*)malloc(opened_facilities_len * sizeof(size_t));
@@ -107,7 +109,7 @@ cflp_val cflp_instance_calc_objective_value(cflp_instance_t* instance, size_t* s
 	return sum_costs;
 }
 
-void cflp_instance_free(cflp_instance_t* instance)
+void cflp_instance_free(cflp_instance *instance)
 {
 	free(instance->fac_max_customers);
 	instance->fac_max_customers = NULL;

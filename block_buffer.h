@@ -20,14 +20,22 @@ struct block_buffer_s
 	int buffer_changed;
 };
 
-typedef struct block_buffer_s block_buffer_t;
+typedef struct block_buffer_s block_buffer;
 
-block_buffer_t* block_buffer_create();
-block_buffer_t* block_buffer_create_len(size_t segment_size);
-void block_buffer_append_string(block_buffer_t* buffer, const char* string);
-void block_buffer_append_memory(block_buffer_t* buffer, const char* memory, size_t memory_len);
-void block_buffer_append_character(block_buffer_t* buffer, const char character);
-void block_buffer_append_int(block_buffer_t* buffer, long long number);
-const char* block_buffer_generate(block_buffer_t* buffer);
-void block_buffer_clear(block_buffer_t** buffer);
-void block_buffer_free(block_buffer_t* buffer);
+block_buffer *block_buffer_create();
+
+block_buffer *block_buffer_create_len(size_t segment_size);
+
+void block_buffer_append_string(block_buffer *buffer, const char *string);
+
+void block_buffer_append_memory(block_buffer *buffer, const char *memory, size_t memory_len);
+
+void block_buffer_append_character(block_buffer *buffer, const char character);
+
+void block_buffer_append_int(block_buffer *buffer, long long number);
+
+const char *block_buffer_generate(block_buffer *buffer);
+
+void block_buffer_clear(block_buffer **buffer);
+
+void block_buffer_free(block_buffer *buffer);

@@ -1,6 +1,5 @@
 #include "cflp_instance_reader.h"
 #include "buffered_reader.h"
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -27,7 +26,7 @@ int cflp_instance_reader_ignore_line(const char* line)
 	return 1;
 }
 
-const char* cflp_instance_reader_read_line(buffered_reader_t* reader)
+const char *cflp_instance_reader_read_line(buffered_reader *reader)
 {
 	const char* line = NULL;
 	do
@@ -37,7 +36,7 @@ const char* cflp_instance_reader_read_line(buffered_reader_t* reader)
 	return line;
 }
 
-int cflp_instance_reader_read_int(buffered_reader_t* reader, const char* prefix)
+int cflp_instance_reader_read_int(buffered_reader *reader, const char *prefix)
 {
 	const char* line = cflp_instance_reader_read_line(reader);
 	if (line == NULL)
@@ -60,7 +59,7 @@ int cflp_instance_reader_read_int(buffered_reader_t* reader, const char* prefix)
 
 int* cflp_instance_reader_fill_int_list(const char* line, size_t line_len, int* array, size_t num)
 {
-	block_buffer_t* buffer = block_buffer_create();
+	block_buffer *buffer = block_buffer_create();
 	int number = 0;
 	size_t number_pos = 0;
 	int error = 0;
@@ -103,7 +102,7 @@ int* cflp_instance_reader_fill_int_list(const char* line, size_t line_len, int* 
 	return array;
 }
 
-int* cflp_instance_reader_read_int_list(buffered_reader_t* reader, const char* prefix, size_t num)
+int *cflp_instance_reader_read_int_list(buffered_reader *reader, const char *prefix, size_t num)
 {
 	const char* line = cflp_instance_reader_read_line(reader);
 	if (line == NULL)
@@ -133,7 +132,8 @@ int* cflp_instance_reader_read_int_list(buffered_reader_t* reader, const char* p
 }
 
 
-int cflp_instance_reader_read_int_array(buffered_reader_t* reader, int* bandwidths, int* distances, int num_facilities, int num_customers)
+int cflp_instance_reader_read_int_array(buffered_reader *reader, int *bandwidths, int *distances, int num_facilities,
+										int num_customers)
 {
 	for (int i = 0; i < num_customers; i++)
 	{
@@ -143,7 +143,7 @@ int cflp_instance_reader_read_int_array(buffered_reader_t* reader, int* bandwidt
 			return 0;
 		}
 		size_t linelen = strlen(line);
-		block_buffer_t* buffer = block_buffer_create();
+		block_buffer *buffer = block_buffer_create();
 		int error = 1;
 		for (size_t k = 0; k < linelen; k++)
 		{
@@ -176,9 +176,9 @@ int cflp_instance_reader_read_int_array(buffered_reader_t* reader, int* bandwidt
 	return 1;
 }
 
-cflp_instance_t* cflp_instance_reader_read_instance(const char* path)
+cflp_instance *cflp_instance_reader_read_instance(const char *path)
 {
-	buffered_reader_t* reader = NULL;
+	buffered_reader *reader = NULL;
 	if (path == NULL)
 	{
 		reader = buffered_reader_create_file(stdin);
@@ -197,7 +197,7 @@ cflp_instance_t* cflp_instance_reader_read_instance(const char* path)
 	int* opening_costs = NULL;
 	int* bandwidths = NULL;
 	int* distances = NULL;
-	cflp_instance_t* result = NULL;
+	cflp_instance *result = NULL;
 
 	do
 	{

@@ -1,7 +1,6 @@
 #include "cflp.h"
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 typedef struct
 {
@@ -10,42 +9,42 @@ typedef struct
 	cflp_val bandwidth;
 	size_t max_user;
 	cflp_val opening_costs;
-} facility_t;
+} facility_st;
 
 typedef struct facility_tuple_s
 {
 	cflp_val key;
-	facility_t* value;
+	facility_st *value;
 	struct facility_tuple_s* next;
-} facility_tuple_t;
+} facility_tuple_st;
 
 typedef struct customer_s
 {
 	cflp_val key;
 	size_t num;
-	facility_tuple_t* nearest;
+	facility_tuple_st *nearest;
 	struct customer_s* next;
 	cflp_val lower;
 	cflp_val cost;
-} customer_t;
+} customer_st;
 
 typedef struct
 {
 	cflp_val key;
-	customer_t* customer;
-} customer_tuple_t;
+	customer_st *customer;
+} customer_tuple_st;
 
 typedef struct
 {
-	facility_tuple_t* array;
-	facility_tuple_t* buffer;
+	facility_tuple_st *array;
+	facility_tuple_st *buffer;
 	size_t length;
-} mergesort_t;
+} mergesort_st;
 
-void merge(mergesort_t sort, size_t l, size_t m, size_t r, int order)
+void merge(mergesort_st sort, size_t l, size_t m, size_t r, int order)
 {
-	memcpy(sort.buffer + l, sort.array + l, (m - l + 1) * sizeof(facility_tuple_t));
-	memcpy(sort.buffer + m + 1, sort.array + m + 1, (r - m) * sizeof(facility_tuple_t));
+	memcpy(sort.buffer + l, sort.array + l, (m - l + 1) * sizeof(facility_tuple_st));
+	memcpy(sort.buffer + m + 1, sort.array + m + 1, (r - m) * sizeof(facility_tuple_st));
 	size_t p = l;
 	size_t q = r;
 	for (size_t i = l; i <= r; i++) {
@@ -58,7 +57,7 @@ void merge(mergesort_t sort, size_t l, size_t m, size_t r, int order)
 	}
 }
 
-void merge_sort_rec(mergesort_t sort, size_t l, size_t r, int order)
+void merge_sort_rec(mergesort_st sort, size_t l, size_t r, int order)
 {
 	if (l < r)
 	{
@@ -69,54 +68,56 @@ void merge_sort_rec(mergesort_t sort, size_t l, size_t r, int order)
 	}
 }
 
-void merge_sort_asc(facility_tuple_t* array, size_t length)
+void merge_sort_asc(facility_tuple_st *array, size_t length)
 {
-	mergesort_t sort;
+	mergesort_st sort;
 	sort.array = array;
 	sort.length = length;
-	sort.buffer = (facility_tuple_t*)malloc(sizeof(facility_tuple_t)* length);
-	memcpy(sort.buffer, sort.array, sizeof(facility_tuple_t)* length);
+	sort.buffer = (facility_tuple_st *) malloc(sizeof(facility_tuple_st) * length);
+	memcpy(sort.buffer, sort.array, sizeof(facility_tuple_st) * length);
 	merge_sort_rec(sort, 0, length - 1, 1);
 	free(sort.buffer);
 }
 
-void merge_sort_dsc(facility_tuple_t* array, size_t length)
+void merge_sort_dsc(facility_tuple_st *array, size_t length)
 {
-	mergesort_t sort;
+	mergesort_st sort;
 	sort.array = array;
 	sort.length = length;
-	sort.buffer = (facility_tuple_t*)malloc(sizeof(facility_tuple_t)* length);
-	memcpy(sort.buffer, sort.array, sizeof(facility_tuple_t)* length);
+	sort.buffer = (facility_tuple_st *) malloc(sizeof(facility_tuple_st) * length);
+	memcpy(sort.buffer, sort.array, sizeof(facility_tuple_st) * length);
 	merge_sort_rec(sort, 0, length - 1, 1);
 	free(sort.buffer);
 }
 
-cflp_val recentCost(facility_t* facility)
+cflp_val recentCost(facility_st *facility)
 {
 	return facility->user == 0 ? facility->opening_costs : 0;
 }
 
-int canAddUser(facility_t* facility, cflp_val maxBandwidth, cflp_val bandwidth)
+int canAddUser(facility_st *facility, cflp_val maxBandwidth, cflp_val bandwidth)
 {
 	return facility->user < facility->max_user && facility->bandwidth + bandwidth <= maxBandwidth;
 }
 
-void addUser(facility_t* facility, cflp_val bandwidth)
+void addUser(facility_st *facility, cflp_val bandwidth)
 {
 	facility->user++;
 	facility->bandwidth += bandwidth;
 }
 
-void removeUser(facility_t* facility, cflp_val bandwidth)
+void removeUser(facility_st *facility, cflp_val bandwidth)
 {
 	facility->user--;
 	facility->bandwidth -= bandwidth;
 }
 
-void branch(void* context, customer_t* customer, size_t* solution, cflp_val* UpperBoundInclusive, cflp_val maxBandwidth, size_t solution_len)
+void branch(void *context, customer_st *customer, size_t *solution, cflp_val *UpperBoundInclusive,
+			cflp_val maxBandwidth, size_t solution_len)
 {
-	for (facility_tuple_t* facilityTuple = customer->nearest; facilityTuple != NULL; facilityTuple = facilityTuple->next) {
-		facility_t* facility = facilityTuple->value;
+	for (facility_tuple_st *facilityTuple = customer->nearest;
+		 facilityTuple != NULL; facilityTuple = facilityTuple->next) {
+		facility_st *facility = facilityTuple->value;
 		cflp_val newCost = customer->cost + recentCost(facility) + facilityTuple->key;
 		if (newCost + customer->lower <= *UpperBoundInclusive) { // L < U Bounding
 			int bandwidth = customer->key;
@@ -140,11 +141,11 @@ void branch(void* context, customer_t* customer, size_t* solution, cflp_val* Upp
 	}
 }
 
-void bnb_run(void* context, cflp_instance_t* instance)
+void bnb_run(void *context, cflp_instance *instance)
 {
 	// calculateBestCustomers
-	customer_t* customersBandwidth = (customer_t*)malloc(sizeof(customer_t) * instance->num_customers);
-	facility_t* facilities = (facility_t*)malloc(sizeof(facility_t)* instance->num_facilities);
+	customer_st *customersBandwidth = (customer_st *) malloc(sizeof(customer_st) * instance->num_customers);
+	facility_st *facilities = (facility_st *) malloc(sizeof(facility_st) * instance->num_facilities);
 	for (size_t k = 0; k < instance->num_facilities; k++)
 	{
 		facilities[k].bandwidth = 0;
@@ -155,7 +156,7 @@ void bnb_run(void* context, cflp_instance_t* instance)
 	}
 	for (size_t i = 0; i < instance->num_customers; i++)
 	{
-		facility_tuple_t* nearest = (facility_tuple_t*)malloc(sizeof(facility_tuple_t)* instance->num_facilities);
+		facility_tuple_st *nearest = (facility_tuple_st *) malloc(sizeof(facility_tuple_st) * instance->num_facilities);
 		for (size_t k = 0; k < instance->num_facilities; k++)
 		{
 			nearest[k].key = instance->distances[CFLP_INSTANCE_DISTANCE_INDEX(k, i, instance->num_facilities, instance->num_customers)] * instance->distance_costs;
@@ -163,7 +164,7 @@ void bnb_run(void* context, cflp_instance_t* instance)
 			nearest[k].next = NULL;
 		}
 		merge_sort_asc(nearest, instance->num_facilities);
-		facility_tuple_t* ptr = &nearest[0];
+		facility_tuple_st *ptr = &nearest[0];
 		for (size_t k = 1; k < instance->num_facilities; k++)
 		{
 			ptr->next = &nearest[k];
@@ -177,8 +178,8 @@ void bnb_run(void* context, cflp_instance_t* instance)
 		customersBandwidth[i].cost = 0;
 	}
 	// TODO: sort customersBandwidth here
-	customer_t* begin = &customersBandwidth[0];
-	customer_t* ptr = begin;
+	customer_st *begin = &customersBandwidth[0];
+	customer_st *ptr = begin;
 	for (size_t i = 1; i < instance->num_customers; i++) {
 		ptr->next = &customersBandwidth[i];
 		ptr = ptr->next;
@@ -188,7 +189,7 @@ void bnb_run(void* context, cflp_instance_t* instance)
 	customersBandwidth[instance->num_customers - 1].lower = cost;
 	for (size_t i = instance->num_customers - 1; i > 0; i--)
 	{
-		customer_t* customer = &customersBandwidth[i];
+		customer_st *customer = &customersBandwidth[i];
 		cflp_val minDistance = customer->nearest->key;
 		cost += minDistance;
 		customersBandwidth[i - 1].lower = cost;

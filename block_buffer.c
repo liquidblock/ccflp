@@ -1,10 +1,8 @@
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
-#include <math.h>
 #include "block_buffer.h"
 #include <string.h>
 #include <errno.h>
-#include <stdlib.h>
 
 #ifndef max
 #define max(a,b) \
@@ -22,7 +20,7 @@ struct block_buffer_segment_s* block_buffer_segment_create(size_t segment_size)
 	return segment;
 }
 
-void block_buffer_add_segment(block_buffer_t* buffer, size_t segment_size)
+void block_buffer_add_segment(block_buffer *buffer, size_t segment_size)
 {
 	buffer->current->next = block_buffer_segment_create(segment_size);
 	buffer->current = buffer->current->next;
@@ -38,19 +36,19 @@ void block_buffer_free_segment(struct block_buffer_segment_s* segment)
 	free(segment);
 }
 
-block_buffer_t* block_buffer_create()
+block_buffer *block_buffer_create()
 {
 	return block_buffer_create_len(BLOCK_BUFFER_DEFAULT_SIZE);
 }
 
-block_buffer_t* block_buffer_create_len(size_t segment_size)
+block_buffer *block_buffer_create_len(size_t segment_size)
 {
 	if (segment_size <= 0)
 	{
 		errno = EINVAL;
 		return NULL;
 	}
-	block_buffer_t* buffer = (block_buffer_t*)malloc(sizeof(block_buffer_t));
+	block_buffer *buffer = (block_buffer *) malloc(sizeof(block_buffer));
 	buffer->buffer = NULL;
 	buffer->buffer_changed = 1;
 	buffer->position = 0;
@@ -60,12 +58,12 @@ block_buffer_t* block_buffer_create_len(size_t segment_size)
 	return buffer;
 }
 
-void block_buffer_append_string(block_buffer_t* buffer, const char* string)
+void block_buffer_append_string(block_buffer *buffer, const char *string)
 {
 	block_buffer_append_memory(buffer, string, strlen(string));
 }
 
-void block_buffer_append_memory(block_buffer_t* buffer, const char* memory, size_t memory_len)
+void block_buffer_append_memory(block_buffer *buffer, const char *memory, size_t memory_len)
 {
 	if (memory_len <= 0)
 	{
@@ -92,7 +90,7 @@ void block_buffer_append_memory(block_buffer_t* buffer, const char* memory, size
 	}
 }
 
-void block_buffer_append_character(block_buffer_t* buffer, const char character)
+void block_buffer_append_character(block_buffer *buffer, const char character)
 {
 	buffer->buffer_changed = 1;
 	if (buffer->position < buffer->current->buffer_size)
@@ -106,7 +104,7 @@ void block_buffer_append_character(block_buffer_t* buffer, const char character)
 	}
 }
 
-void block_buffer_append_int(block_buffer_t* buffer, long long number)
+void block_buffer_append_int(block_buffer *buffer, long long number)
 {
 	if (number < 0) {
 		block_buffer_append_character(buffer, '-');
@@ -124,7 +122,7 @@ void block_buffer_append_int(block_buffer_t* buffer, long long number)
 	}
 }
 
-const char* block_buffer_generate(block_buffer_t* buffer)
+const char *block_buffer_generate(block_buffer *buffer)
 {
 	if (buffer->buffer_changed)
 	{
@@ -176,13 +174,13 @@ const char* block_buffer_generate(block_buffer_t* buffer)
 	return buffer->buffer;
 }
 
-void block_buffer_clear(block_buffer_t** buffer)
+void block_buffer_clear(block_buffer **buffer)
 {
 	block_buffer_free(*buffer);
 	*buffer = block_buffer_create();
 }
 
-void block_buffer_free(block_buffer_t* buffer)
+void block_buffer_free(block_buffer *buffer)
 {
 	while (buffer->head != NULL)
 	{

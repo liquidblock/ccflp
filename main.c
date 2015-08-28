@@ -4,11 +4,8 @@
 #include "cflp.h"
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <sys/timeb.h>
-#include <errno.h>
-#include <signal.h>
-#include <stdlib.h>
+
 #ifdef WIN32
 #define PTW32_STATIC_LIB
 
@@ -31,7 +28,7 @@ millisec currentTimeMillis()
 
 typedef struct
 {
-	cflp_instance_t* instance;
+	cflp_instance *instance;
 	pthread_mutex_t mutex;
 	cflp_val upper_bound;
 	size_t* solution;
@@ -69,14 +66,14 @@ void* run_thread(void* param)
 	pthread_mutex_lock(&args->mutex);
 	pthread_cond_signal(&args->cond);
 	pthread_mutex_unlock(&args->mutex);
-	cflp_instance_t* instance = args->instance;
+	cflp_instance *instance = args->instance;
 	bnb_run(param, instance);
 	return NULL;
 }
 
-void run(cflp_instance_t* instance, int dontStop, int test, int debug, const char* choppedFileName)
+void run(cflp_instance *instance, int dontStop, int test, int debug, const char *choppedFileName)
 {
-	cflp_instance_t* original = cflp_instance_copy(instance);
+	cflp_instance *original = cflp_instance_copy(instance);
 	
 	millisec start = currentTimeMillis();
 	millisec end = currentTimeMillis();
@@ -118,7 +115,7 @@ void run(cflp_instance_t* instance, int dontStop, int test, int debug, const cha
 
 	int* used_bandwidths = NULL;
 	int* connected_customers = NULL;
-	block_buffer_t* msg = block_buffer_create();
+	block_buffer *msg = block_buffer_create();
 	do
 	{
 		if (args.solution == NULL)
@@ -273,8 +270,8 @@ int main(int argv, char** argc)
 			fileName = argc[i];
 		}
 	}
-	
-	cflp_instance_t* instance = cflp_instance_reader_read_instance(fileName);
+
+	cflp_instance *instance = cflp_instance_reader_read_instance(fileName);
 	if (instance != NULL)
 	{
 		run(instance, dontStop, test, debug, choppedFileName);

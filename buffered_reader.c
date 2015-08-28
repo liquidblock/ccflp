@@ -3,17 +3,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-buffered_reader_t* buffered_reader_create_path(const char* filename)
+buffered_reader *buffered_reader_create_path(const char *filename)
 {
 	return buffered_reader_create_path_len(filename, BUFFERED_READER_DEFAULT_LEN);
 }
 
-buffered_reader_t* buffered_reader_create_file(FILE* file)
+buffered_reader *buffered_reader_create_file(FILE *file)
 {
 	return buffered_reader_create_file_len(file, BUFFERED_READER_DEFAULT_LEN);
 }
 
-buffered_reader_t* buffered_reader_create_path_len(const char* filename, size_t buffer_len)
+buffered_reader *buffered_reader_create_path_len(const char *filename, size_t buffer_len)
 {
 	FILE* file = fopen(filename, "r");
 	if (file == NULL)
@@ -23,7 +23,7 @@ buffered_reader_t* buffered_reader_create_path_len(const char* filename, size_t 
 	return buffered_reader_create_file_len(file, buffer_len);
 }
 
-buffered_reader_t* buffered_reader_create_file_len(FILE* file, size_t buffer_len)
+buffered_reader *buffered_reader_create_file_len(FILE *file, size_t buffer_len)
 {
 	if (buffer_len <= 0)
 	{
@@ -35,7 +35,7 @@ buffered_reader_t* buffered_reader_create_file_len(FILE* file, size_t buffer_len
 		errno = EINVAL;
 		return NULL;
 	}
-	buffered_reader_t* reader = (buffered_reader_t*)malloc(sizeof(buffered_reader_t));
+	buffered_reader *reader = (buffered_reader *) malloc(sizeof(buffered_reader));
 	reader->buffer = (char*)malloc(buffer_len);
 	reader->buffer_len = 0;
 	reader->file = file;
@@ -46,12 +46,12 @@ buffered_reader_t* buffered_reader_create_file_len(FILE* file, size_t buffer_len
 	return reader;
 }
 
-int burred_reader_empty(buffered_reader_t* reader)
+int burred_reader_empty(buffered_reader *reader)
 {
 	return reader->buffer_pos >= reader->buffer_len;
 }
 
-void buffered_reader_read_char(buffered_reader_t* reader)
+void buffered_reader_read_char(buffered_reader *reader)
 {
 	if (burred_reader_empty(reader))
 	{
@@ -62,7 +62,7 @@ void buffered_reader_read_char(buffered_reader_t* reader)
 	}
 }
 
-const char* buffered_reader_read_line(buffered_reader_t* reader)
+const char *buffered_reader_read_line(buffered_reader *reader)
 {
 	block_buffer_clear(&reader->line_buffer);
 	int empty = 1;
@@ -115,13 +115,13 @@ const char* buffered_reader_read_line(buffered_reader_t* reader)
 	}
 }
 
-void buffered_reader_close(buffered_reader_t* reader)
+void buffered_reader_close(buffered_reader *reader)
 {
 	if(reader->file != NULL) fclose(reader->file);
 	reader->file = NULL;
 }
 
-void buffered_reader_free(buffered_reader_t* reader)
+void buffered_reader_free(buffered_reader *reader)
 {
 	buffered_reader_close(reader);
 
